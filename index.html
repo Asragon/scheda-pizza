@@ -357,7 +357,7 @@
   /* ── MOBILE ── */
   @media (max-width: 640px) {
     body { padding: 8px; gap: 8px; }
-    .toolbar { width: 100%; top: 0; border-radius: 0 0 10px 10px; flex-wrap: wrap; gap: 6px 8px; }
+    .toolbar { width: 100%; position: static; border-radius: 10px; flex-wrap: wrap; gap: 6px 8px; }
     .toolbar button { padding: 8px 12px; font-size: 10px; }
     .zoom-controls { display: none; }
 
@@ -1004,15 +1004,20 @@ function apriModaleFase() {
 function chiudiModaleFase() { document.getElementById('modal-fase').classList.remove('open'); }
 function presetFase() {
   const p = FASE_PRESETS[document.getElementById('mf-tipo').value];
-  document.getElementById('mf-titolo').value = p.titolo;
-  document.getElementById('mf-desc').value = p.desc;
+  const titoloEl = document.getElementById('mf-titolo');
+  const descEl = document.getElementById('mf-desc');
+  titoloEl.value = '';
+  titoloEl.placeholder = p.titolo || 'Titolo della fase';
+  descEl.value = '';
+  descEl.placeholder = p.desc || 'Descrizione dettagliata della fase...';
 }
 function confermaFase() {
   const tipo = document.getElementById('mf-tipo').value;
+  const p = FASE_PRESETS[tipo];
   fasi.push({
-    emoji:     FASE_PRESETS[tipo].emoji,
-    titolo:    document.getElementById('mf-titolo').value.trim() || 'Fase',
-    desc:      document.getElementById('mf-desc').value.trim(),
+    emoji:     p.emoji,
+    titolo:    document.getElementById('mf-titolo').value.trim() || p.titolo || 'Fase',
+    desc:      document.getElementById('mf-desc').value.trim() || p.desc,
     nota:      document.getElementById('mf-nota').value.trim(),
     tempoVal:  document.getElementById('mf-tempo').value.trim(),
     tempoUnit: document.getElementById('mf-tempo-unit').value

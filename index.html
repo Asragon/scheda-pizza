@@ -81,6 +81,7 @@
   .zoom-pct { font-size: 9px; font-weight: 700; color: var(--grigio); min-width: 34px; text-align: center; }
   .tb-msg { font-size: 8px; color: var(--verde); font-weight: 600; }
   .tb-sep { width: 1px; height: 20px; background: var(--border); }
+  .zoom-controls { display: flex; align-items: center; gap: 8px; }
 
   /* ── EDITABLE + HINT ── */
   [contenteditable="true"] {
@@ -353,6 +354,88 @@
   .modal-actions button.primary { background: var(--header-bg); color: var(--bianco); border-color: var(--header-bg); }
   .modal-actions button.primary:hover { background: var(--header-bg2); }
 
+  /* ── MOBILE ── */
+  @media (max-width: 640px) {
+    body { padding: 8px; gap: 8px; }
+    .toolbar { width: 100%; top: 0; border-radius: 0 0 10px 10px; flex-wrap: wrap; gap: 6px 8px; }
+    .toolbar button { padding: 8px 12px; font-size: 10px; }
+    .zoom-controls { display: none; }
+
+    .page { width: 100%; min-height: auto; padding: 14px 12px 18px; }
+
+    .card-title { flex-wrap: wrap; row-gap: 3px; }
+    .card-title span[contenteditable] { flex-shrink: 0; }
+
+    /* Header */
+    .header { flex-direction: column; align-items: flex-start; }
+    .header-title h1 { font-size: 24px; }
+    .header-nome-ricetta, .header-note-gen { font-size: 14px; min-width: 0; width: 100%; }
+    .campo-edit { align-self: stretch; }
+    .date-input, .date-input-display { font-size: 14px; }
+    .label-mini, .header-label-mini { font-size: 8px; }
+
+    /* Stagioni */
+    .stagione-bar { flex-wrap: wrap; }
+    .stagione-pill { flex: 1 1 45%; font-size: 10.5px; padding: 8px 4px; }
+    .stagione-pill .s-emoji { font-size: 13px; }
+
+    /* Grid layout: tutto impilato */
+    .main-grid { grid-template-columns: 1fr; gap: 10px; }
+    .card { padding: 12px; }
+    .card-title { font-size: 11px; }
+
+    /* Ingredienti */
+    .ingredienti-grid { grid-template-columns: 1fr; gap: 6px; }
+    .ing-emoji { font-size: 16px; }
+    .ing-nome { font-size: 13px; }
+    .ing-qty { font-size: 16px; min-width: 34px; }
+    .ing-note { font-size: 10.5px; }
+    .ing-stagione-block { gap: 4px; }
+    .ing-stag-label { font-size: 8.5px; }
+    .ing-stag-val { font-size: 11px; }
+    .ing-stag-unit { font-size: 7px; }
+    .sel-small { font-size: 11px; padding: 8px 10px; }
+    .btn-add { font-size: 10px; padding: 8px 10px; }
+    .btn-remove { font-size: 15px; padding: 2px 6px; }
+
+    /* Parametri */
+    .param-item { flex: 1 1 45%; padding: 8px 6px; }
+    .param-label { font-size: 8.5px; }
+    .param-value { font-size: 15px; }
+    .param-sub { font-size: 8px; }
+    .param-emoji { font-size: 15px; }
+
+    /* Fasi */
+    .fase-titolo { font-size: 12.5px; }
+    .fase-tempo { font-size: 9.5px; padding: 3px 7px; }
+    .fase-desc { font-size: 10.5px; }
+    .fase-nota-breve { font-size: 9px; }
+    .fase-num { width: 24px; height: 24px; font-size: 9.5px; }
+
+    /* Lievitazione */
+    .liev-item { padding: 8px 10px; }
+    .liev-icon { font-size: 18px; }
+    .liev-label { font-size: 12px; }
+    .liev-desc { font-size: 10px; }
+    .liev-time { font-size: 18px; }
+
+    /* Cottura */
+    .cottura-select { font-size: 12px; padding: 9px 10px; }
+    .cottura-vals { gap: 8px; }
+    .cottura-val-box { padding: 8px 10px; }
+    .cottura-val-label { font-size: 7.5px; }
+    .cottura-val-num { font-size: 17px; }
+
+    /* Note */
+    .note-area { font-size: 12.5px; min-height: 60px; }
+    [contenteditable="true"] { font-size: inherit; }
+
+    /* Modale */
+    .modal { width: 100%; }
+    .modal select, .modal input, .modal textarea { font-size: 16px; padding: 9px 10px; }
+    .modal-actions button { padding: 9px 16px; font-size: 10.5px; }
+  }
+
   @media print {
     @page { size: A4; margin: 0; }
     body { background: white; padding: 0; }
@@ -373,12 +456,14 @@
   <button onclick="document.getElementById('file-import').click()">📂 Carica ricetta</button>
   <button onclick="window.print()">🖨️ Stampa</button>
   <input type="file" id="file-import" accept=".json" style="display:none" onchange="caricaRicetta(event)">
-  <div class="tb-sep"></div>
-  <span style="font-size:9px;font-weight:700;color:var(--grigio);">🔍</span>
-  <button class="zoom-btn" onclick="zoomDelta(-0.1)" title="Riduci">−</button>
-  <span class="zoom-pct" id="zoom-pct">100%</span>
-  <button class="zoom-btn" onclick="zoomDelta(0.1)" title="Ingrandisci">＋</button>
-  <button onclick="zoomFit()" title="Adatta alla larghezza della finestra">⛶ Adatta</button>
+  <div class="tb-sep zoom-controls"></div>
+  <div class="zoom-controls">
+    <span style="font-size:9px;font-weight:700;color:var(--grigio);">🔍</span>
+    <button class="zoom-btn" onclick="zoomDelta(-0.1)" title="Riduci">−</button>
+    <span class="zoom-pct" id="zoom-pct">100%</span>
+    <button class="zoom-btn" onclick="zoomDelta(0.1)" title="Ingrandisci">＋</button>
+    <button onclick="zoomFit()" title="Adatta alla larghezza della finestra">⛶ Adatta</button>
+  </div>
   <span class="tb-msg" id="tb-msg"></span>
 </div>
 
@@ -1068,18 +1153,26 @@ function caricaRicetta(ev) {
 let zoomLevel = 1;
 let fitMode = true; /* all'apertura si adatta alla finestra */
 const PAGE_W = 794; /* 210mm in px CSS */
+const MOBILE_BREAKPOINT = 640; /* sotto questa larghezza il layout è fluido, niente zoom "a foglio" */
 
 function applyZoom() {
+  if (window.innerWidth <= MOBILE_BREAKPOINT) {
+    document.querySelector('.page').style.zoom = '';
+    document.getElementById('zoom-pct').textContent = '100%';
+    return;
+  }
   document.querySelector('.page').style.zoom = zoomLevel;
   document.getElementById('zoom-pct').textContent = Math.round(zoomLevel * 100) + '%';
 }
 function zoomDelta(d) {
+  if (window.innerWidth <= MOBILE_BREAKPOINT) return;
   fitMode = false;
   zoomLevel = Math.min(2.5, Math.max(0.4, +(zoomLevel + d).toFixed(2)));
   applyZoom();
 }
 function zoomFit() {
   fitMode = true;
+  if (window.innerWidth <= MOBILE_BREAKPOINT) { applyZoom(); return; }
   zoomLevel = Math.min(2.2, Math.max(0.4, (window.innerWidth - 48) / PAGE_W));
   applyZoom();
 }

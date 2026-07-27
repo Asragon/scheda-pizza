@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scheda Pizza</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --rosso:       #C8381A;
+    --rosso-light: #F5E8E4;
+    --header-bg:   #8B4513;
+    --header-bg2:  #A0522D;
+    --ocra:        #D4860A;
+    --ocra-light:  #FDF3DC;
+    --verde:       #2D6A2D;
+    --verde-light: #E8F2E8;
+    --crema:       #FAF6F0;
+    --grigio:      #6B6560;
+    --nero:        #1A1208;
+    --bianco:      #FFFFFF;
+    --border:      #E0D5C8;
+    --hint:        #B8AFA3;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #E8E0D5;
+    display: flex;
+    flex-direction: column;
+    align-items: safe center;
+    padding: 20px;
+    min-height: 100vh;
+    gap: 12px;
+    overflow-x: auto;
+  }
+
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    background: var(--crema);
+    padding: 10mm 10mm 8mm;
+    position: relative;
+    box-shadow: 0 4px 40px rgba(0,0,0,0.2);
+    zoom: 1;
+    flex-shrink: 0;
+  }
+
+  /* ── TOOLBAR (non stampata) ── */
+  .toolbar {
+    width: min(210mm, calc(100vw - 40px));
+    position: sticky;
+    top: 10px;
+    z-index: 50;
+    background: var(--bianco);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+  }
+  .toolbar .tb-title { font-size: 10px; font-weight: 700; color: var(--header-bg); display: flex; align-items: center; gap: 4px; }
+  .toolbar button {
+    font-family: 'Inter', sans-serif;
+    font-size: 9px; font-weight: 600;
+    border-radius: 6px; padding: 6px 12px; cursor: pointer;
+    border: 1.5px solid var(--border);
+    background: var(--crema); color: var(--nero);
+  }
+  .toolbar button.primary { background: var(--header-bg); color: var(--bianco); border-color: var(--header-bg); }
+  .toolbar button.primary:hover { background: var(--header-bg2); }
+  .toolbar button:hover { border-color: var(--ocra); }
+  .toolbar button.zoom-btn { padding: 6px 9px; font-size: 11px; line-height: 1; font-weight: 700; }
+  .zoom-pct { font-size: 9px; font-weight: 700; color: var(--grigio); min-width: 34px; text-align: center; }
+  .tb-msg { font-size: 8px; color: var(--verde); font-weight: 600; }
+  .tb-sep { width: 1px; height: 20px; background: var(--border); }
+
+  /* ── EDITABLE + HINT ── */
+  [contenteditable="true"] {
+    outline: none;
+    border-bottom: 1.5px dashed rgba(212,134,10,0.45);
+    min-width: 20px;
+    display: inline-block;
+    cursor: text;
+    transition: border-color .2s, background .2s;
+  }
+  [contenteditable="true"]:focus {
+    border-bottom-color: var(--ocra);
+    background: rgba(212,134,10,0.07);
+    border-radius: 3px 3px 0 0;
+  }
+  [contenteditable="true"]:empty::before {
+    content: attr(data-hint);
+    color: var(--hint);
+    font-style: italic;
+    font-weight: 400;
+    pointer-events: none;
+  }
+  [contenteditable="true"].hint-light:empty::before { color: rgba(255,255,255,0.45); }
+  .editable-block[contenteditable="true"] {
+    display: block;
+    border-bottom: none;
+    border: 1.5px dashed rgba(212,134,10,0.4);
+    border-radius: 5px;
+    padding: 3px 5px;
+    width: 100%;
+  }
+  .editable-block[contenteditable="true"]:focus {
+    border-color: var(--ocra);
+    background: rgba(212,134,10,0.05);
+  }
+  .unit-fix { font-size: 7px; color: var(--grigio); font-weight: 600; flex-shrink: 0; }
+
+  /* ── HEADER ── */
+  .header {
+    background: linear-gradient(135deg, var(--header-bg) 0%, var(--header-bg2) 100%);
+    border-radius: 8px;
+    padding: 9px 14px 8px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 7px;
+    gap: 10px;
+  }
+  .header-left { display: flex; align-items: flex-start; gap: 10px; flex: 1; }
+  .pizza-icon  { font-size: 28px; margin-top: 2px; flex-shrink: 0; }
+  .header-title { color: var(--bianco); flex: 1; }
+  .header-title h1 { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 900; line-height: 1; }
+  .header-label-mini { font-size: 6.5px; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 4px; display: block; }
+  .header-nome-ricetta {
+    font-size: 13px; font-weight: 700; color: var(--bianco);
+    border-bottom: 1.5px dashed rgba(255,255,255,0.4);
+    min-width: 140px; display: inline-block; margin-top: 2px;
+  }
+  .header-nome-ricetta:focus { border-bottom-color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.07); border-radius: 3px 3px 0 0; }
+  .header-note-gen {
+    font-size: 7.5px; color: rgba(255,255,255,0.85);
+    border-bottom: 1px dashed rgba(255,255,255,0.3);
+    min-width: 120px; display: inline-block; margin-top: 2px;
+  }
+  .header-note-gen:focus { border-bottom-color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.07); border-radius: 3px 3px 0 0; }
+  .campo-edit { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; padding: 4px 8px; flex-shrink: 0; }
+  .label-mini { font-size: 6.5px; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 2px; }
+  .date-input {
+    font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600;
+    background: transparent; border: none; border-bottom: 1px dashed rgba(255,255,255,0.4);
+    color: var(--bianco); outline: none; cursor: pointer; padding-bottom: 1px;
+    color-scheme: dark;
+  }
+  .date-input:focus { border-bottom-color: rgba(255,255,255,0.9); }
+
+  /* ── STAGIONI ── */
+  .stagione-bar { display: flex; gap: 4px; margin-bottom: 7px; }
+  .stagione-pill {
+    flex: 1; text-align: center; border-radius: 16px; padding: 4px;
+    font-size: 6.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
+    cursor: pointer; border: 2px solid #E5E7EB; color: #9CA3AF; background: transparent;
+    display: flex; align-items: center; justify-content: center; gap: 3px;
+    transition: all .15s; user-select: none;
+  }
+  .stagione-pill .s-emoji { font-size: 10px; }
+  .stagione-pill:hover { border-color: var(--ocra); }
+  .stagione-pill[data-sel="pri"].selected { background: #D1FAE5; color: #065F46; border-color: #059669; }
+  .stagione-pill[data-sel="est"].selected { background: #FEF3C7; color: #92400E; border-color: #F59E0B; }
+  .stagione-pill[data-sel="aut"].selected { background: #FEE2E2; color: #991B1B; border-color: var(--rosso); }
+  .stagione-pill[data-sel="inv"].selected { background: #E0F2FE; color: #075985; border-color: #0284C7; }
+
+  /* ── GRID / CARDS ── */
+  .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 7px; }
+  .full-width { grid-column: 1 / -1; }
+  .card { background: var(--bianco); border-radius: 8px; padding: 8px 10px; border: 1.5px solid var(--border); }
+  .card-title {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--grigio); margin-bottom: 6px; padding-bottom: 5px;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-title .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .dot-rosso { background: var(--rosso); }
+  .dot-ocra  { background: var(--ocra); }
+  .dot-verde { background: var(--verde); }
+  .dot-blu   { background: #2563EB; }
+
+  /* ── SEZIONI IMPASTO ── */
+  .sezione-impasto {
+    border: 1.5px solid var(--border); border-radius: 7px;
+    padding: 5px 6px; margin-bottom: 5px; background: #FDFBF7;
+  }
+  .sezione-header { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap; }
+  .sezione-header .sez-label { font-size: 8px; font-weight: 700; color: var(--header-bg); }
+  .sel-small {
+    font-family: 'Inter', sans-serif; font-size: 8.5px; font-weight: 600;
+    padding: 4px 7px; border-radius: 6px; border: 1.5px solid var(--border);
+    background: var(--bianco); color: var(--nero); cursor: pointer;
+  }
+  .sel-small:focus { outline: none; border-color: var(--ocra); }
+
+  .ingredienti-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+  .ingrediente-item { background: var(--crema); border-radius: 5px; padding: 3px 6px; border: 1px solid var(--border); position: relative; }
+  .ing-row-top { display: flex; align-items: flex-start; gap: 5px; }
+  .ing-emoji   { font-size: 12px; flex-shrink: 0; margin-top: 1px; }
+  .ing-info    { flex: 1; min-width: 0; }
+  .ing-nome    { font-size: 8px; font-weight: 700; color: var(--nero); }
+  .ing-qty-row { display: flex; align-items: baseline; gap: 4px; }
+  .ing-qty     { font-size: 11px; font-weight: 700; color: var(--rosso); min-width: 28px; }
+  .ing-note    { font-size: 7px; color: var(--grigio); }
+
+  .ing-stagione-block {
+    margin-top: 4px; border-top: 1px solid var(--border); padding-top: 4px;
+    display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 2px;
+  }
+  .ing-stag-item {
+    text-align: center; border-radius: 4px; padding: 2px 1px; cursor: pointer;
+    border: 1.5px solid transparent; opacity: 0.45; transition: all .15s; user-select: none;
+  }
+  .ing-stag-item:hover { opacity: 0.8; }
+  .ing-stag-item.selected { opacity: 1; }
+  .ing-stag-item.pri { background: #D1FAE5; } .ing-stag-item.pri.selected { border-color: #059669; }
+  .ing-stag-item.est { background: #FEF9C3; } .ing-stag-item.est.selected { border-color: #F59E0B; }
+  .ing-stag-item.aut { background: #FEE2E2; } .ing-stag-item.aut.selected { border-color: var(--rosso); }
+  .ing-stag-item.inv { background: #DBEAFE; } .ing-stag-item.inv.selected { border-color: #0284C7; }
+  .ing-stag-label { font-size: 6px; color: var(--grigio); }
+  .ing-stag-val-row { display: flex; align-items: baseline; justify-content: center; gap: 1px; }
+  .ing-stag-val { font-size: 8px; font-weight: 700; min-width: 18px; }
+  .ing-stag-unit { font-size: 6px; color: var(--grigio); font-weight: 600; }
+  .ing-stag-item.pri .ing-stag-val { color: #065F46; }
+  .ing-stag-item.est .ing-stag-val { color: #D97706; }
+  .ing-stag-item.aut .ing-stag-val { color: var(--rosso); }
+  .ing-stag-item.inv .ing-stag-val { color: #2563EB; }
+
+  .btn-add {
+    display: flex; align-items: center; gap: 4px; background: none;
+    border: 1.5px dashed var(--ocra); border-radius: 6px; padding: 4px 8px;
+    cursor: pointer; font-size: 7.5px; font-weight: 600; color: var(--ocra);
+    justify-content: center; margin-top: 3px; font-family: 'Inter', sans-serif;
+  }
+  .btn-add:hover { background: var(--ocra-light); }
+  .btn-add.wide { width: 100%; }
+  .btn-remove {
+    background: none; border: none; cursor: pointer; color: #CCC;
+    font-size: 11px; padding: 0 2px; line-height: 1; flex-shrink: 0;
+  }
+  .btn-remove:hover { color: var(--rosso); }
+  .add-ing-row { display: flex; gap: 4px; margin-top: 5px; align-items: center; }
+  .add-ing-row .sel-small { flex: 1; }
+
+  /* ── PARAMETRI ── */
+  .parametri-row { display: flex; gap: 5px; flex-wrap: wrap; }
+  .param-item { flex: 1; min-width: 90px; background: var(--crema); border-radius: 6px; padding: 5px 5px; border: 1px solid var(--border); text-align: center; position: relative; }
+  .param-item .btn-remove { position: absolute; top: 1px; right: 2px; font-size: 9px; }
+  .param-emoji { font-size: 12px; display: block; margin-bottom: 1px; }
+  .param-label { font-size: 6.5px; color: var(--grigio); text-transform: uppercase; letter-spacing: 0.4px; }
+  .param-value-row { display: flex; align-items: baseline; justify-content: center; gap: 2px; }
+  .param-value { font-size: 11px; font-weight: 700; color: var(--nero); min-width: 25px; }
+  .param-sub   { font-size: 6.5px; color: var(--rosso); font-weight: 600; }
+
+  /* ── FASI ── */
+  .fasi-list   { display: flex; flex-direction: column; gap: 4px; }
+  .fasi-empty  { font-size: 7.5px; color: var(--grigio); font-style: italic; text-align: center; padding: 10px 4px; }
+  .fase-item   { display: flex; gap: 7px; align-items: flex-start; }
+  .fase-num    {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--header-bg); color: var(--bianco);
+    font-size: 8px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .fase-body   { flex: 1; min-width: 0; }
+  .fase-header { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .fase-emoji  { font-size: 10px; }
+  .fase-titolo { font-size: 8.5px; font-weight: 700; color: var(--nero); flex: 1; min-width: 0; }
+  .fase-tempo  {
+    background: var(--ocra-light); color: var(--ocra); font-size: 7px; font-weight: 700;
+    padding: 1px 5px; border-radius: 10px; border: 1px solid #F5D080; white-space: nowrap;
+    display: inline-flex; align-items: baseline; gap: 2px;
+  }
+  .fase-tempo [contenteditable] { min-width: 14px; border-bottom-color: rgba(212,134,10,0.4); }
+  .fase-tempo .ft-unit { font-size: 6.5px; font-weight: 700; }
+  .fase-nota-breve {
+    font-size: 7px; font-weight: 600; color: var(--header-bg);
+    border-bottom: 1px dashed rgba(139,69,19,0.35); display: inline-block; min-width: 50px;
+  }
+  .fase-nota-breve:focus { outline: none; border-bottom-color: var(--header-bg); background: rgba(139,69,19,0.05); border-radius: 2px 2px 0 0; }
+  .fase-desc   { font-size: 7px; color: var(--grigio); margin-top: 2px; line-height: 1.4; }
+  .fase-connector { width: 2px; height: 6px; background: var(--border); margin-left: 9px; }
+
+  /* ── LIEVITAZIONE ── */
+  .liev-item  { background: var(--crema); border-radius: 6px; padding: 6px 8px; border: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .liev-icon  { font-size: 14px; flex-shrink: 0; }
+  .liev-body  { flex: 1; }
+  .liev-label { font-size: 8px; font-weight: 700; color: var(--nero); }
+  .liev-desc  { font-size: 7px; color: var(--grigio); margin-top: 1px; }
+  .liev-time-row { display: flex; align-items: baseline; gap: 2px; white-space: nowrap; }
+  .liev-time  { font-size: 14px; font-weight: 700; min-width: 25px; }
+
+  /* ── COTTURA ── */
+  .cottura-select-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  .cottura-select {
+    flex: 1; font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 600;
+    padding: 5px 8px; border-radius: 6px; border: 1.5px solid var(--border);
+    background: var(--crema); color: var(--nero); cursor: pointer;
+  }
+  .cottura-select:focus { outline: none; border-color: var(--ocra); }
+  .cottura-vals { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+  .cottura-val-box { background: var(--crema); border-radius: 6px; padding: 6px 8px; border: 1px solid var(--border); text-align: center; }
+  .cottura-val-label { font-size: 6.5px; color: var(--grigio); text-transform: uppercase; letter-spacing: .4px; }
+  .cottura-val-row { display: flex; align-items: baseline; justify-content: center; gap: 2px; }
+  .cottura-val-num { font-size: 13px; font-weight: 700; color: var(--rosso); min-width: 35px; }
+
+  /* ── NOTE ── */
+  .note-area { background: #FFFBF0; border: 1.5px dashed var(--ocra) !important; border-radius: 8px; padding: 7px 10px; min-height: 50px; }
+  .note-area[contenteditable="true"]:focus { background: #FFF7E0; border-radius: 8px; }
+
+  /* ── MODALE ── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(26,18,8,0.5);
+    display: none; align-items: center; justify-content: center; z-index: 100;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--bianco); border-radius: 12px; width: 340px; max-width: 92vw;
+    padding: 16px; box-shadow: 0 10px 50px rgba(0,0,0,0.3);
+  }
+  .modal h3 { font-family: 'Playfair Display', serif; font-size: 15px; color: var(--header-bg); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .modal label { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--grigio); display: block; margin: 8px 0 3px; }
+  .modal select, .modal input, .modal textarea {
+    width: 100%; font-family: 'Inter', sans-serif; font-size: 10px;
+    padding: 6px 8px; border-radius: 6px; border: 1.5px solid var(--border);
+    background: var(--crema); color: var(--nero);
+  }
+  .modal select:focus, .modal input:focus, .modal textarea:focus { outline: none; border-color: var(--ocra); }
+  .modal textarea { resize: vertical; min-height: 50px; }
+  .modal .tempo-row { display: flex; gap: 5px; }
+  .modal .tempo-row input { flex: 2; }
+  .modal .tempo-row select { flex: 1; }
+  .modal-actions { display: flex; gap: 6px; margin-top: 14px; justify-content: flex-end; }
+  .modal-actions button {
+    font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700;
+    padding: 6px 14px; border-radius: 6px; cursor: pointer; border: 1.5px solid var(--border); background: var(--crema);
+  }
+  .modal-actions button.primary { background: var(--header-bg); color: var(--bianco); border-color: var(--header-bg); }
+  .modal-actions button.primary:hover { background: var(--header-bg2); }
+
+  @media print {
+    @page { size: A4; margin: 0; }
+    body { background: white; padding: 0; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .page { box-shadow: none; width: 210mm; zoom: 1 !important; }
+    .toolbar, .btn-add, .btn-remove, .modal-overlay, .add-ing-row { display: none !important; }
+    .ing-stag-item { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ TOOLBAR ═══ -->
+<div class="toolbar">
+  <span class="tb-title">📖 Ricettario</span>
+  <div class="tb-sep"></div>
+  <button class="primary" onclick="salvaRicetta()">💾 Salva ricetta</button>
+  <button onclick="document.getElementById('file-import').click()">📂 Carica ricetta</button>
+  <button onclick="window.print()">🖨️ Stampa</button>
+  <input type="file" id="file-import" accept=".json" style="display:none" onchange="caricaRicetta(event)">
+  <div class="tb-sep"></div>
+  <span style="font-size:9px;font-weight:700;color:var(--grigio);">🔍</span>
+  <button class="zoom-btn" onclick="zoomDelta(-0.1)" title="Riduci">−</button>
+  <span class="zoom-pct" id="zoom-pct">100%</span>
+  <button class="zoom-btn" onclick="zoomDelta(0.1)" title="Ingrandisci">＋</button>
+  <button onclick="zoomFit()" title="Adatta alla larghezza della finestra">⛶ Adatta</button>
+  <span class="tb-msg" id="tb-msg"></span>
+</div>
+
+<!-- ═══ PAGINA ═══ -->
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <span class="pizza-icon">🍕</span>
+      <div class="header-title">
+        <h1 contenteditable="true" data-k="titolo" data-hint="Pizza" class="hint-light" style="border-bottom:1.5px dashed rgba(255,255,255,0.35);min-width:80px;">Pizza</h1>
+        <span class="header-label-mini">Nome ricetta</span>
+        <span class="header-nome-ricetta hint-light" contenteditable="true" data-k="nome" data-hint="es. Napoletana verace 24h"></span>
+        <span class="header-label-mini" style="margin-top:4px;">Note generali</span>
+        <span class="header-note-gen hint-light" contenteditable="true" data-k="notegen" data-hint="es. lunga lievitazione · alta idratazione"></span>
+      </div>
+    </div>
+    <div class="campo-edit">
+      <span class="label-mini">📅 Data</span>
+      <input type="date" class="date-input" id="data-ricetta">
+    </div>
+  </div>
+
+  <!-- STAGIONI -->
+  <div class="stagione-bar" id="stagione-bar">
+    <div class="stagione-pill" data-sel="pri" onclick="selStagione('pri')"><span class="s-emoji">🌸</span>Primavera</div>
+    <div class="stagione-pill" data-sel="est" onclick="selStagione('est')"><span class="s-emoji">☀️</span>Estate</div>
+    <div class="stagione-pill" data-sel="aut" onclick="selStagione('aut')"><span class="s-emoji">🍂</span>Autunno</div>
+    <div class="stagione-pill" data-sel="inv" onclick="selStagione('inv')"><span class="s-emoji">❄️</span>Inverno</div>
+  </div>
+
+  <div class="main-grid">
+
+    <!-- ═══ INGREDIENTI IMPASTO (sezioni multiple) ═══ -->
+    <div class="card full-width">
+      <div class="card-title">
+        <span class="dot dot-rosso"></span>
+        🧺 Ingredienti impasto — per
+        <span contenteditable="true" data-k="npizze" data-hint="4" style="font-weight:700;color:var(--rosso);min-width:12px;"></span>
+        pizze &nbsp;·&nbsp; panetto
+        <span contenteditable="true" data-k="pesopanetto" data-hint="250" style="font-weight:700;color:var(--rosso);min-width:22px;"></span>
+        <span class="unit-fix">g cad.</span>
+      </div>
+      <div id="sezioni-container"></div>
+      <button class="btn-add wide" onclick="aggiungiSezione()">＋ Aggiungi sezione impasto (prefermento, chiusura...)</button>
+    </div>
+
+    <!-- ═══ PARAMETRI ═══ -->
+    <div class="card full-width">
+      <div class="card-title"><span class="dot dot-ocra"></span> ⚙️ Parametri tecnici impasto</div>
+      <div class="parametri-row" id="parametri-row"></div>
+      <button class="btn-add wide" onclick="aggiungiParametro()">＋ Aggiungi parametro</button>
+    </div>
+
+    <!-- ═══ FASI ═══ -->
+    <div class="card">
+      <div class="card-title"><span class="dot dot-blu"></span> 🤲 Fasi di lavorazione</div>
+      <div class="fasi-list" id="fasi-list"></div>
+      <button class="btn-add wide" onclick="apriModaleFase()">＋ Aggiungi fase</button>
+    </div>
+
+    <!-- ═══ COLONNA DX ═══ -->
+    <div style="display:flex;flex-direction:column;gap:7px;">
+
+      <div class="card">
+        <div class="card-title"><span class="dot dot-verde"></span> 🫧 Schema lievitazione</div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <div class="liev-item">
+            <span class="liev-icon">🌡️</span>
+            <div class="liev-body">
+              <div class="liev-label">Puntata <span style="font-weight:400;font-size:6.5px;color:var(--grigio);">(1ª lievitazione)</span></div>
+              <div class="liev-desc" contenteditable="true" data-k="l_punt_d" data-hint="es. T. ambiente 22–26°C, coperto da panno umido"></div>
+            </div>
+            <div class="liev-time-row">
+              <span class="liev-time" style="color:var(--verde);" contenteditable="true" data-k="l_punt_t" data-hint="2"></span>
+              <span class="unit-fix">h</span>
+            </div>
+          </div>
+          <div class="liev-item">
+            <span class="liev-icon">🧊</span>
+            <div class="liev-body">
+              <div class="liev-label">Maturazione in frigo</div>
+              <div class="liev-desc" contenteditable="true" data-k="l_mat_d" data-hint="es. a 4°C — migliora digeribilità e aroma"></div>
+            </div>
+            <div class="liev-time-row">
+              <span class="liev-time" style="color:#2563EB;" contenteditable="true" data-k="l_mat_t" data-hint="24–48"></span>
+              <span class="unit-fix">h</span>
+            </div>
+          </div>
+          <div class="liev-item">
+            <span class="liev-icon">🔄</span>
+            <div class="liev-body">
+              <div class="liev-label">Appretto <span style="font-weight:400;font-size:6.5px;color:var(--grigio);">(2ª lievitazione)</span></div>
+              <div class="liev-desc" contenteditable="true" data-k="l_app_d" data-hint="es. panetti a T. ambiente dopo lo staglio"></div>
+            </div>
+            <div class="liev-time-row">
+              <span class="liev-time" style="color:var(--ocra);" contenteditable="true" data-k="l_app_t" data-hint="4–8"></span>
+              <span class="unit-fix">h</span>
+            </div>
+          </div>
+          <div style="background:#FEF9C3;border-radius:5px;padding:5px 8px;border:1px solid #FCD34D;">
+            <div style="font-size:7.5px;font-weight:700;color:#92400E;">⏱️ Totale impasto → forno</div>
+            <div style="display:flex;align-items:baseline;gap:3px;">
+              <span style="font-size:8px;font-weight:700;color:#92400E;min-width:30px;" contenteditable="true" data-k="l_tot" data-hint="28–58"></span>
+              <span class="unit-fix" style="color:#92400E;">ore</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COTTURA -->
+      <div class="card">
+        <div class="card-title"><span class="dot dot-rosso"></span> 🔥 Cottura</div>
+        <div class="cottura-select-row">
+          <span style="font-size:8px;font-weight:700;color:var(--grigio);flex-shrink:0;">Forno:</span>
+          <select class="cottura-select" id="forno-select" onchange="cambiaForno()">
+            <option value="legna">🪵 Forno a legna</option>
+            <option value="casalingo">🏠 Forno elettrico casalingo</option>
+            <option value="professionale">🔥 Forno pizza professionale</option>
+            <option value="padella">🍳 Padella + grill</option>
+          </select>
+        </div>
+        <div class="cottura-select-row">
+          <span style="font-size:8px;font-weight:700;color:var(--grigio);flex-shrink:0;">Pietra:</span>
+          <select class="cottura-select" id="pietra-select">
+            <option value="cordierite">Cordierite</option>
+            <option value="biscotto">Biscotto</option>
+            <option value="altro">Altro</option>
+          </select>
+        </div>
+        <div class="cottura-vals" style="grid-template-columns:1fr 1fr 1fr;">
+          <div class="cottura-val-box">
+            <div class="cottura-val-label">🔼 T° Cielo</div>
+            <div class="cottura-val-row">
+              <span class="cottura-val-num" contenteditable="true" data-k="cott_cielo" data-hint="450–485" style="font-size:11px;"></span>
+              <span class="unit-fix" id="cott-cielo-unit">°C</span>
+            </div>
+          </div>
+          <div class="cottura-val-box">
+            <div class="cottura-val-label">🔽 T° Platea</div>
+            <div class="cottura-val-row">
+              <span class="cottura-val-num" contenteditable="true" data-k="cott_platea" data-hint="400–430" style="font-size:11px;"></span>
+              <span class="unit-fix" id="cott-platea-unit">°C</span>
+            </div>
+          </div>
+          <div class="cottura-val-box">
+            <div class="cottura-val-label">⏱️ Tempo cottura</div>
+            <div class="cottura-val-row">
+              <span class="cottura-val-num" contenteditable="true" data-k="cott_tempo" data-hint="60–90" style="font-size:11px;"></span>
+              <span class="unit-fix">sec</span>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:5px;background:#FEF9C3;border-radius:5px;padding:5px 8px;border-left:3px solid var(--ocra);">
+          <div style="font-size:7.5px;font-weight:700;color:#92400E;">📝 Note</div>
+          <div style="font-size:7px;color:var(--grigio);" contenteditable="true" data-k="cott_note" data-hint="es. ruotare la pizza a metà cottura"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══ NOTE ═══ -->
+    <div class="card full-width">
+      <div class="card-title"><span class="dot dot-verde"></span> 📝 Note personali &amp; modifiche</div>
+      <div class="note-area" contenteditable="true" data-k="note" data-hint="es. Ho usato Caputo Pizzeria W300, idratazione al 65%, 3g di lievito per il freddo. Prossima volta provare 48h di frigo..." style="display:block;font-size:7.5px;color:var(--grigio);width:100%;cursor:text;"></div>
+    </div>
+
+  </div>
+
+</div><!-- fine pagina -->
+
+
+<!-- ═══ MODALE FASE ═══ -->
+<div class="modal-overlay" id="modal-fase">
+  <div class="modal">
+    <h3>🤲 Aggiungi fase di lavorazione</h3>
+
+    <label>Tipo di fase</label>
+    <select id="mf-tipo" onchange="presetFase()">
+      <option value="aggiunta">🧺 Aggiunta ingredienti</option>
+      <option value="impasto">💪 Impastare</option>
+      <option value="startstop">⏯️ Start and stop</option>
+      <option value="pieghe">🔄 Pieghe (stretch &amp; fold)</option>
+      <option value="riposo">😴 Riposo</option>
+      <option value="staglio">🔪 Staglio</option>
+      <option value="maturazione">🧊 Maturazione</option>
+      <option value="appretto">🫧 Appretto</option>
+      <option value="custom">✏️ Fase personalizzata</option>
+    </select>
+
+    <label>Titolo</label>
+    <input type="text" id="mf-titolo" placeholder="Titolo della fase">
+
+    <label>Descrizione</label>
+    <textarea id="mf-desc" placeholder="Descrizione dettagliata della fase..."></textarea>
+
+    <label>Nota breve (opzionale)</label>
+    <input type="text" id="mf-nota" placeholder="es. attenzione alla temperatura...">
+
+    <label>Tempo</label>
+    <div class="tempo-row">
+      <input type="text" id="mf-tempo" placeholder="es. 30">
+      <select id="mf-tempo-unit">
+        <option value="min">min</option>
+        <option value="h">h</option>
+        <option value="sec">sec</option>
+        <option value="giorni">giorni</option>
+      </select>
+    </div>
+
+    <div class="modal-actions">
+      <button onclick="chiudiModaleFase()">Annulla</button>
+      <button class="primary" onclick="confermaFase()">＋ Aggiungi</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═════════ STATE ═════════ */
+let stagioneSel = null;
+let fasi = [];      // {emoji, titolo, desc, nota, tempoVal, tempoUnit}
+let sezioni = [];   // {tipologia, pref, ingredienti:[{tipo, v:{...}}]}
+let parametri = []; // {emoji, label, labelHint, value, valueHint, sub, subHint, unit}
+
+function parametriDefault() {
+  return [
+    { emoji:'⏳', label:'Tempo totale',      value:'', valueHint:'28–48', unit:'h',   sub:'', subHint:'pizza pronta in...' },
+    { emoji:'💧', label:'Idratazione',       value:'', valueHint:'62',    unit:'%',   sub:'', subHint:'ml acqua / g farina' },
+    { emoji:'🌡️', label:'T° impasto finale', value:'', valueHint:'23–25', unit:'°C',  sub:'', subHint:'temperatura desiderata' },
+    { emoji:'⏱️', label:'Impastamento',      value:'', valueHint:'20',    unit:'min', sub:'', subHint:'a mano / planetaria' },
+    { emoji:'⚖️', label:'Peso panetto',      value:'', valueHint:'250',   unit:'g',   sub:'', subHint:'⌀ 28–32 cm' }
+  ];
+}
+function aggiungiParametro() {
+  parametri.push({ emoji:'📝', label:'', labelHint:'nome parametro', value:'', valueHint:'valore', unit:'', sub:'', subHint:'descrizione' });
+  renderParametri();
+}
+function rimuoviParametro(i) { parametri.splice(i,1); renderParametri(); }
+function renderParametri() {
+  const row = document.getElementById('parametri-row');
+  row.innerHTML = '';
+  if (parametri.length === 0) {
+    row.innerHTML = '<div style="width:100%;font-size:7px;color:var(--grigio);font-style:italic;text-align:center;padding:6px;">Nessun parametro — aggiungine uno qui sotto</div>';
+    return;
+  }
+  parametri.forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'param-item';
+    div.innerHTML = `
+      <button class="btn-remove" onclick="rimuoviParametro(${i})" title="Rimuovi parametro">✕</button>
+      <span class="param-emoji">${p.emoji}</span>
+      <div class="param-label ${p.labelHint ? 'p-label' : ''}" ${p.labelHint ? `contenteditable="true" data-hint="${p.labelHint}"` : ''}>${p.labelHint ? '' : p.label}</div>
+      <div class="param-value-row">
+        <span class="param-value p-value" contenteditable="true" data-hint="${p.valueHint}"></span>
+        ${p.unit ? `<span class="unit-fix">${p.unit}</span>` : ''}
+      </div>
+      <div class="param-sub p-sub" contenteditable="true" data-hint="${p.subHint}"></div>`;
+    const b = (cls, key) => { const el = div.querySelector(cls); if (el) { el.textContent = p[key] || ''; el.addEventListener('input', () => p[key] = el.innerText.trim()); } };
+    b('.p-label','label'); b('.p-value','value'); b('.p-sub','sub');
+    row.appendChild(div);
+  });
+}
+
+const FASE_PRESETS = {
+  aggiunta:    { emoji:'🧺', titolo:'Aggiunta ingredienti',      desc:"Versare gli ingredienti nell'ordine corretto: acqua, sale, 10% della farina, lievito sbriciolato, poi la farina restante gradualmente. Non mettere sale e lievito a contatto diretto." },
+  impasto:     { emoji:'💪', titolo:'Impastare',                 desc:"Lavorare l'impasto fino a ottenerlo liscio, elastico e non appiccicoso. Aggiungere l'olio (se previsto) verso la fine." },
+  startstop:   { emoji:'⏯️', titolo:'Start and stop',            desc:"Alternare brevi cicli di impastamento a pause di riposo (es. 1 min di lavoro, 5–10 min di pausa). Sviluppa il glutine senza scaldare l'impasto." },
+  pieghe:      { emoji:'🔄', titolo:'Pieghe (stretch & fold)',   desc:'Prendere un lembo, stirare e ripiegare verso il centro. Girare la ciotola di 90° e ripetere 4 volte per giro.' },
+  riposo:      { emoji:'😴', titolo:'Riposo',                    desc:'Lasciare riposare coperto da panno umido o pellicola a temperatura ambiente.' },
+  staglio:     { emoji:'🔪', titolo:'Staglio',                   desc:'Dividere in panetti del peso desiderato. Arrotondare sul piano sigillando la base: forma sferica liscia e tesa.' },
+  maturazione: { emoji:'🧊', titolo:'Maturazione',               desc:'Riporre in contenitore chiuso in frigo a 4°C per la maturazione: migliora digeribilità, aroma e alveolatura.' },
+  appretto:    { emoji:'🫧', titolo:'Appretto',                  desc:'Lasciar lievitare i panetti a temperatura ambiente in cassetta coperta fino a raddoppio.' },
+  custom:      { emoji:'✏️', titolo:'', desc:'' }
+};
+
+const FORNO_PRESETS = {
+  legna:         { cielo:'450–485', platea:'400–430', tempUnit:'°C', tempo:'60–90',   note:'Cottura rapidissima ad altissima temperatura, ruotare la pizza a metà cottura.' },
+  casalingo:     { cielo:'250–280', platea:'250–280', tempUnit:'°C', tempo:'420–600', note:'Statico alla massima temperatura. Preriscaldare forno + pietra 30 min. Infornare in basso, finire in alto o con grill.' },
+  professionale: { cielo:'400–450', platea:'380–420', tempUnit:'°C', tempo:'120–180', note:'Preriscaldare bene la pietra. Girare la pizza spesso per cottura uniforme.' },
+  padella:       { cielo:'grill',   platea:'fuoco alto', tempUnit:'', tempo:'180+120', note:'3 min in padella rovente con coperchio, poi 2 min sotto il grill per il cornicione.' }
+};
+
+const TIPOLOGIE = { diretto:'Diretto', prefermento:'Prefermento', chiusura:'Chiusura impasto' };
+const PREF_TIPI = { biga:'Biga', poolish:'Poolish', altro:'Altro' };
+
+/* hints per gli ingredienti */
+const ING_HINTS = {
+  farina:  { tipo:'tipo 0 · W 280–330', marca:'marca (es. Caputo)', qty:'1000' },
+  acqua:   { note:'minerale, non clorata', qty:'620', idr:'62', temp:'18' },
+  sale:    { nome:'Sale', qty:'28' },
+  lievito: { tipo:'di birra fresco', qty:'2–4' },
+  olio:    { nome:'Olio EVO', qty:'20', note:'opzionale · alla fine' },
+  malto:   { nome:'Malto / Zucchero', qty:'5', note:'opzionale · colorazione' },
+  altro:   { nome:'nome ingrediente', qty:'00', unit:'g', note:'note...' }
+};
+const ING_EMOJI = { farina:'🌾', acqua:'💧', sale:'🧂', lievito:'🧬', olio:'🫒', malto:'🍯', altro:'✨' };
+
+/* ═════════ HINT: pulizia campi vuoti ═════════ */
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (el.isContentEditable && el.innerText.trim() === '') el.innerHTML = '';
+});
+
+/* ═════════ STAGIONI (sincronizzate) ═════════ */
+function selStagione(s) {
+  stagioneSel = (stagioneSel === s) ? null : s;
+  renderStagioneUI();
+}
+function renderStagioneUI() {
+  document.querySelectorAll('#stagione-bar .stagione-pill').forEach(p =>
+    p.classList.toggle('selected', p.dataset.sel === stagioneSel));
+  document.querySelectorAll('.ing-stag-item').forEach(i =>
+    i.classList.toggle('selected', i.dataset.sel === stagioneSel));
+}
+
+/* stagione automatica in base alla data (equinozi/solstizi ~ 21 del mese) */
+function stagioneDaData(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr + 'T12:00:00');
+  if (isNaN(d)) return null;
+  const m = d.getMonth() + 1, g = d.getDate();
+  if ((m === 3 && g >= 21) || m === 4 || m === 5 || (m === 6 && g < 21))  return 'pri';
+  if ((m === 6 && g >= 21) || m === 7 || m === 8 || (m === 9 && g < 23))  return 'est';
+  if ((m === 9 && g >= 23) || m === 10 || m === 11 || (m === 12 && g < 21)) return 'aut';
+  return 'inv';
+}
+document.getElementById('data-ricetta').addEventListener('change', e => {
+  const s = stagioneDaData(e.target.value);
+  if (s) { stagioneSel = s; renderStagioneUI(); }
+});
+
+/* ═════════ SEZIONI IMPASTO ═════════ */
+function nuovoIngrediente(tipo) {
+  const v = {};
+  Object.keys(ING_HINTS[tipo]).forEach(k => v[k] = '');
+  if (tipo === 'sale') v.nome = 'Sale'; /* nome già impostato, modificabile */
+  return { tipo, v };
+}
+function aggiungiSezione() {
+  sezioni.push({ tipologia:'prefermento', pref:'biga', ingredienti:[] });
+  renderSezioni();
+}
+function rimuoviSezione(si) { sezioni.splice(si,1); renderSezioni(); }
+function aggiungiIngrediente(si) {
+  const sel = document.getElementById('sel-add-ing-' + si);
+  sezioni[si].ingredienti.push(nuovoIngrediente(sel.value));
+  renderSezioni();
+}
+function aggiungiFarina(si) {
+  const ings = sezioni[si].ingredienti;
+  let lastFarina = -1;
+  ings.forEach((ing, ii) => { if (ing.tipo === 'farina') lastFarina = ii; });
+  ings.splice(lastFarina + 1, 0, nuovoIngrediente('farina'));
+  renderSezioni();
+}
+function rimuoviIngrediente(si, ii) { sezioni[si].ingredienti.splice(ii,1); renderSezioni(); }
+
+function bindEd(el, obj, key) {
+  el.textContent = obj[key] || '';
+  el.addEventListener('input', () => obj[key] = el.innerText.trim());
+}
+
+function renderSezioni() {
+  const c = document.getElementById('sezioni-container');
+  c.innerHTML = '';
+  sezioni.forEach((sez, si) => {
+    const div = document.createElement('div');
+    div.className = 'sezione-impasto';
+
+    /* header sezione */
+    const head = document.createElement('div');
+    head.className = 'sezione-header';
+    head.innerHTML = `
+      <span class="sez-label">Tipologia:</span>
+      <select class="sel-small sez-tip">
+        ${Object.entries(TIPOLOGIE).map(([k,l]) => `<option value="${k}" ${sez.tipologia===k?'selected':''}>${l}</option>`).join('')}
+      </select>
+      <select class="sel-small sez-pref" style="${sez.tipologia==='prefermento'?'':'display:none;'}">
+        ${Object.entries(PREF_TIPI).map(([k,l]) => `<option value="${k}" ${sez.pref===k?'selected':''}>${l}</option>`).join('')}
+      </select>
+      ${si > 0 ? `<button class="btn-remove" style="margin-left:auto;" onclick="rimuoviSezione(${si})" title="Rimuovi sezione">✕</button>` : ''}
+    `;
+    head.querySelector('.sez-tip').addEventListener('change', e => {
+      sez.tipologia = e.target.value;
+      head.querySelector('.sez-pref').style.display = sez.tipologia === 'prefermento' ? '' : 'none';
+    });
+    head.querySelector('.sez-pref').addEventListener('change', e => sez.pref = e.target.value);
+    div.appendChild(head);
+
+    /* griglia ingredienti */
+    const grid = document.createElement('div');
+    grid.className = 'ingredienti-grid';
+    if (sez.ingredienti.length === 0) {
+      grid.innerHTML = '<div style="grid-column:1/-1;font-size:7px;color:var(--grigio);font-style:italic;text-align:center;padding:6px;">Nessun ingrediente — aggiungi dal menu qui sotto</div>';
+    }
+    /* indice dell'ultima farina, per posizionare il tasto "＋ Aggiungi farina" subito sotto */
+    let lastFarina = -1;
+    sez.ingredienti.forEach((ing, ii) => { if (ing.tipo === 'farina') lastFarina = ii; });
+    sez.ingredienti.forEach((ing, ii) => {
+      grid.appendChild(renderIngrediente(ing, si, ii));
+      if (ii === lastFarina) {
+        const bf = document.createElement('button');
+        bf.className = 'btn-add';
+        bf.style.cssText = 'grid-column:1/-1;margin-top:0;';
+        bf.textContent = '＋ Aggiungi farina';
+        bf.onclick = () => aggiungiFarina(si);
+        grid.appendChild(bf);
+      }
+    });
+    div.appendChild(grid);
+
+    /* riga aggiungi ingrediente */
+    const addRow = document.createElement('div');
+    addRow.className = 'add-ing-row';
+    addRow.innerHTML = `
+      <select class="sel-small" id="sel-add-ing-${si}">
+        <option value="farina">🌾 Farina</option>
+        <option value="acqua">💧 Acqua</option>
+        <option value="sale">🧂 Sale</option>
+        <option value="lievito">🧬 Lievito</option>
+        <option value="olio">🫒 Olio</option>
+        <option value="malto">🍯 Malto / Zucchero</option>
+        <option value="altro">✨ Altro ingrediente</option>
+      </select>
+      <button class="btn-add" style="margin-top:0;flex-shrink:0;" onclick="aggiungiIngrediente(${si})">＋ Aggiungi</button>
+    `;
+    div.appendChild(addRow);
+    c.appendChild(div);
+  });
+  renderStagioneUI();
+}
+
+function renderIngrediente(ing, si, ii) {
+  const t = ing.tipo, H = ING_HINTS[t];
+  const item = document.createElement('div');
+  item.className = 'ingrediente-item';
+  if (t === 'acqua' || t === 'farina') item.style.gridColumn = '1/-1';
+
+  let inner = `<div class="ing-row-top"><span class="ing-emoji">${ING_EMOJI[t]}</span><div class="ing-info">`;
+
+  if (t === 'farina') {
+    inner += `
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span class="ing-nome">Farina</span>
+        <span contenteditable="true" class="e-tipo" data-hint="${H.tipo}" style="font-size:7.5px;color:var(--grigio);min-width:70px;"></span>
+        <span contenteditable="true" class="e-marca" data-hint="${H.marca}" style="font-size:7.5px;color:var(--grigio);min-width:60px;"></span>
+      </div>
+      <div class="ing-qty-row">
+        <span class="ing-qty e-qty" contenteditable="true" data-hint="${H.qty}"></span>
+        <span class="unit-fix">g</span>
+      </div>`;
+  } else if (t === 'acqua') {
+    inner += `
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span class="ing-nome">Acqua</span>
+        <span contenteditable="true" class="e-note" data-hint="${H.note}" style="font-size:7px;color:var(--grigio);min-width:80px;"></span>
+      </div>
+      <div class="ing-qty-row">
+        <span class="ing-qty e-qty" contenteditable="true" data-hint="${H.qty}"></span>
+        <span class="unit-fix">ml</span>
+        <span class="unit-fix" style="margin-left:4px;">· idratazione</span>
+        <span contenteditable="true" class="e-idr" data-hint="${H.idr}" style="font-size:10px;font-weight:700;color:var(--rosso);min-width:20px;"></span>
+        <span class="unit-fix">%</span>
+        <span class="unit-fix" style="margin-left:4px;">· T° utilizzo</span>
+        <span contenteditable="true" class="e-temp" data-hint="${H.temp}" style="font-size:10px;font-weight:700;color:#2563EB;min-width:20px;"></span>
+        <span class="unit-fix">°C</span>
+      </div>`;
+  } else if (t === 'lievito') {
+    inner += `
+      <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+        <span class="ing-nome">Lievito</span>
+        <span contenteditable="true" class="e-tipo" data-hint="${H.tipo}" style="font-size:7px;color:var(--grigio);min-width:50px;"></span>
+      </div>
+      <div class="ing-qty-row">
+        <span class="ing-qty e-qty" contenteditable="true" data-hint="${H.qty}"></span>
+        <span class="unit-fix">g</span>
+      </div>`;
+  } else if (t === 'sale') {
+    inner += `
+      <span contenteditable="true" class="ing-nome e-nome" data-hint="Sale" style="min-width:50px;"></span>
+      <div class="ing-qty-row">
+        <span class="ing-qty e-qty" contenteditable="true" data-hint="${H.qty}"></span>
+        <span class="unit-fix">g</span>
+      </div>`;
+  } else if (t === 'altro') {
+    inner += `
+      <span contenteditable="true" class="ing-nome e-nome" data-hint="${H.nome}" style="min-width:60px;"></span>
+      <div class="ing-qty-row">
+        <span class="ing-qty e-qty" contenteditable="true" data-hint="${H.qty}"></span>
+        <span contenteditable="true" class="unit-fix e-unit" data-hint="${H.unit}" style="min-width:12px;border-bottom:1px dashed rgba(212,134,10,0.45);"></span>
+      </div>
+      <div class="ing-note e-note" contenteditable="true" data-hint="${H.note}"></div>`;
+  } else { /* sale, olio, malto */
+    inner += `
+      <span contenteditable="true" class="ing-nome e-nome" data-hint="${H.nome}" style="min-width:60px;"></span>
+      <div class="ing-qty-row">
+        <span class="ing-qty e-qty" contenteditable="true" data-hint="${H.qty}"></span>
+        <span class="unit-fix">g</span>
+      </div>
+      <div class="ing-note e-note" contenteditable="true" data-hint="${H.note}"></div>`;
+  }
+  inner += `</div><button class="btn-remove" onclick="rimuoviIngrediente(${si},${ii})" title="Rimuovi">✕</button></div>`;
+
+  item.innerHTML = inner;
+
+  /* binding modello */
+  const bind = (cls, key) => { const el = item.querySelector(cls); if (el) bindEd(el, ing.v, key); };
+  bind('.e-tipo','tipo'); bind('.e-marca','marca'); bind('.e-qty','qty');
+  bind('.e-note','note'); bind('.e-idr','idr'); bind('.e-nome','nome'); bind('.e-unit','unit');
+  bind('.e-temp','temp');
+  return item;
+}
+
+/* ═════════ FASI ═════════ */
+function apriModaleFase() {
+  document.getElementById('mf-tipo').value = 'aggiunta';
+  presetFase();
+  document.getElementById('mf-nota').value = '';
+  document.getElementById('mf-tempo').value = '';
+  document.getElementById('mf-tempo-unit').value = 'min';
+  document.getElementById('modal-fase').classList.add('open');
+}
+function chiudiModaleFase() { document.getElementById('modal-fase').classList.remove('open'); }
+function presetFase() {
+  const p = FASE_PRESETS[document.getElementById('mf-tipo').value];
+  document.getElementById('mf-titolo').value = p.titolo;
+  document.getElementById('mf-desc').value = p.desc;
+}
+function confermaFase() {
+  const tipo = document.getElementById('mf-tipo').value;
+  fasi.push({
+    emoji:     FASE_PRESETS[tipo].emoji,
+    titolo:    document.getElementById('mf-titolo').value.trim() || 'Fase',
+    desc:      document.getElementById('mf-desc').value.trim(),
+    nota:      document.getElementById('mf-nota').value.trim(),
+    tempoVal:  document.getElementById('mf-tempo').value.trim(),
+    tempoUnit: document.getElementById('mf-tempo-unit').value
+  });
+  renderFasi();
+  chiudiModaleFase();
+}
+function rimuoviFase(idx) { fasi.splice(idx,1); renderFasi(); }
+function renderFasi() {
+  const list = document.getElementById('fasi-list');
+  list.innerHTML = '';
+  if (fasi.length === 0) {
+    list.innerHTML = '<div class="fasi-empty">Nessuna fase inserita.<br>Usa il pulsante qui sotto per aggiungere le fasi della tua lavorazione.</div>';
+    return;
+  }
+  fasi.forEach((f, i) => {
+    if (i > 0) {
+      const conn = document.createElement('div');
+      conn.className = 'fase-connector';
+      list.appendChild(conn);
+    }
+    const div = document.createElement('div');
+    div.className = 'fase-item';
+    div.innerHTML = `
+      <div class="fase-num">${i+1}</div>
+      <div class="fase-body">
+        <div class="fase-header">
+          <span class="fase-emoji">${f.emoji}</span>
+          <span class="fase-titolo fs-titolo" contenteditable="true" data-hint="titolo fase"></span>
+          <span class="fase-tempo">
+            <span class="fs-tempo" contenteditable="true" data-hint="0"></span>
+            <span class="ft-unit">${f.tempoUnit}</span>
+          </span>
+          <button class="btn-remove" onclick="rimuoviFase(${i})" title="Rimuovi fase">✕</button>
+        </div>
+        <div style="margin-top:2px;"><span class="fase-nota-breve fs-nota" contenteditable="true" data-hint="nota breve..."></span></div>
+        <div class="fase-desc fs-desc" contenteditable="true" data-hint="descrizione della fase..."></div>
+      </div>`;
+    const b = (cls, key) => { const el = div.querySelector(cls); el.textContent = f[key] || ''; el.addEventListener('input', () => f[key] = el.innerText.trim()); };
+    b('.fs-titolo','titolo'); b('.fs-tempo','tempoVal'); b('.fs-nota','nota'); b('.fs-desc','desc');
+    list.appendChild(div);
+  });
+}
+
+/* ═════════ COTTURA ═════════ */
+function cambiaForno() {
+  const p = FORNO_PRESETS[document.getElementById('forno-select').value];
+  document.querySelector('[data-k="cott_cielo"]').setAttribute('data-hint', p.cielo);
+  document.querySelector('[data-k="cott_platea"]').setAttribute('data-hint', p.platea);
+  document.querySelector('[data-k="cott_tempo"]').setAttribute('data-hint', p.tempo);
+  document.querySelector('[data-k="cott_note"]').setAttribute('data-hint', p.note);
+  document.getElementById('cott-cielo-unit').textContent = p.tempUnit;
+  document.getElementById('cott-platea-unit').textContent = p.tempUnit;
+  /* svuota i valori inseriti per mostrare i nuovi suggerimenti */
+  ['cott_cielo','cott_platea','cott_tempo','cott_note'].forEach(k =>
+    document.querySelector('[data-k="' + k + '"]').textContent = '');
+}
+
+/* ═════════ SALVA / CARICA (file) ═════════ */
+function msg(t, err) {
+  const el = document.getElementById('tb-msg');
+  el.textContent = t;
+  el.style.color = err ? 'var(--rosso)' : 'var(--verde)';
+  setTimeout(() => el.textContent = '', 4000);
+}
+function statoCorrente() {
+  const campi = {};
+  document.querySelectorAll('[data-k]').forEach(el => campi[el.dataset.k] = el.innerText.trim());
+  return {
+    versione: 3,
+    campi,
+    dataRicetta: document.getElementById('data-ricetta').value,
+    stagione: stagioneSel,
+    forno: document.getElementById('forno-select').value,
+    pietra: document.getElementById('pietra-select').value,
+    fornoUnits: {
+      cielo: document.getElementById('cott-cielo-unit').textContent,
+      platea: document.getElementById('cott-platea-unit').textContent
+    },
+    parametri: JSON.parse(JSON.stringify(parametri)),
+    sezioni: JSON.parse(JSON.stringify(sezioni)),
+    fasi: JSON.parse(JSON.stringify(fasi)),
+    salvataIl: new Date().toISOString()
+  };
+}
+function applicaStato(s) {
+  Object.entries(s.campi || {}).forEach(([k, v]) => {
+    const el = document.querySelector('[data-k="' + k + '"]');
+    if (el) el.textContent = v || '';
+  });
+  document.getElementById('data-ricetta').value = s.dataRicetta || '';
+  stagioneSel = s.stagione || null;
+  if (s.forno && FORNO_PRESETS[s.forno]) document.getElementById('forno-select').value = s.forno;
+  if (s.pietra) document.getElementById('pietra-select').value = s.pietra;
+  if (s.fornoUnits) {
+    if (s.fornoUnits.cielo !== undefined) document.getElementById('cott-cielo-unit').textContent = s.fornoUnits.cielo;
+    if (s.fornoUnits.platea !== undefined) document.getElementById('cott-platea-unit').textContent = s.fornoUnits.platea;
+  }
+  parametri = (s.parametri && s.parametri.length) ? s.parametri : parametriDefault();
+  sezioni = (s.sezioni && s.sezioni.length) ? s.sezioni : sezioniDefault();
+  fasi = s.fasi || [];
+  renderParametri();
+  renderSezioni();
+  renderFasi();
+  renderStagioneUI();
+}
+function salvaRicetta() {
+  const titolo = (document.querySelector('[data-k="titolo"]').innerText || 'pizza').trim() || 'pizza';
+  const nome = (document.querySelector('[data-k="nome"]').innerText || 'ricetta').trim() || 'ricetta';
+  /* data della ricetta se scelta, altrimenti oggi */
+  const data = document.getElementById('data-ricetta').value ||
+               new Date().toISOString().slice(0, 10);
+  const slug = s => s.replace(/[^a-z0-9]+/gi,'_').replace(/^_+|_+$/g,'').toLowerCase();
+  const blob = new Blob([JSON.stringify(statoCorrente(), null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = slug(titolo) + '_' + slug(nome) + '_' + data + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  msg('✓ Ricetta salvata come file');
+}
+function caricaRicetta(ev) {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      applicaStato(JSON.parse(e.target.result));
+      msg('✓ Ricetta caricata: ' + file.name);
+    } catch(err) { msg('File non valido', true); }
+  };
+  reader.readAsText(file);
+  ev.target.value = '';
+}
+
+/* ═════════ ZOOM ═════════ */
+let zoomLevel = 1;
+let fitMode = true; /* all'apertura si adatta alla finestra */
+const PAGE_W = 794; /* 210mm in px CSS */
+
+function applyZoom() {
+  document.querySelector('.page').style.zoom = zoomLevel;
+  document.getElementById('zoom-pct').textContent = Math.round(zoomLevel * 100) + '%';
+}
+function zoomDelta(d) {
+  fitMode = false;
+  zoomLevel = Math.min(2.5, Math.max(0.4, +(zoomLevel + d).toFixed(2)));
+  applyZoom();
+}
+function zoomFit() {
+  fitMode = true;
+  zoomLevel = Math.min(2.2, Math.max(0.4, (window.innerWidth - 48) / PAGE_W));
+  applyZoom();
+}
+window.addEventListener('resize', () => { if (fitMode) zoomFit(); });
+/* zoom con Ctrl + rotellina del mouse */
+window.addEventListener('wheel', e => {
+  if (e.ctrlKey) {
+    e.preventDefault();
+    zoomDelta(e.deltaY < 0 ? 0.1 : -0.1);
+  }
+}, { passive: false });
+
+/* ═════════ INIT ═════════ */
+function sezioniDefault() {
+  return [{
+    tipologia: 'diretto',
+    pref: 'biga',
+    ingredienti: [
+      nuovoIngrediente('farina'),
+      nuovoIngrediente('acqua'),
+      nuovoIngrediente('sale'),
+      nuovoIngrediente('lievito'),
+      nuovoIngrediente('olio'),
+      nuovoIngrediente('malto')
+    ]
+  }];
+}
+sezioni = sezioniDefault();
+parametri = parametriDefault();
+renderSezioni();
+renderParametri();
+renderFasi();
+zoomFit();
+
+document.getElementById('modal-fase').addEventListener('click', e => {
+  if (e.target === e.currentTarget) chiudiModaleFase();
+});
+</script>
+</body>
+</html>

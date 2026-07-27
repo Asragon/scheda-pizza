@@ -436,6 +436,74 @@
     .modal-actions button { padding: 9px 16px; font-size: 10.5px; }
   }
 
+  /* ── EXPORT IMMAGINE (layout sempre a colonna singola, come mobile) ── */
+  body.exporting-image .btn-add,
+  body.exporting-image .btn-remove,
+  body.exporting-image .modal-overlay,
+  body.exporting-image .add-ing-row { display: none !important; }
+  body.exporting-image .ing-stag-item { opacity: 1; }
+
+  body.exporting-image .page {
+    width: 100%; min-height: auto; padding: 14px 12px 18px;
+    box-shadow: none; zoom: 1 !important;
+  }
+  body.exporting-image .card-title { flex-wrap: wrap; row-gap: 3px; }
+  body.exporting-image .card-title span[contenteditable] { flex-shrink: 0; }
+
+  body.exporting-image .header { flex-direction: column; align-items: flex-start; }
+  body.exporting-image .header-title h1 { font-size: 24px; }
+  body.exporting-image .header-nome-ricetta,
+  body.exporting-image .header-note-gen { font-size: 14px; min-width: 0; width: 100%; }
+  body.exporting-image .campo-edit { align-self: stretch; }
+  body.exporting-image .date-input { font-size: 14px; }
+  body.exporting-image .label-mini,
+  body.exporting-image .header-label-mini { font-size: 8px; }
+
+  body.exporting-image .stagione-bar { flex-wrap: wrap; }
+  body.exporting-image .stagione-pill { flex: 1 1 45%; font-size: 10.5px; padding: 8px 4px; }
+  body.exporting-image .stagione-pill .s-emoji { font-size: 13px; }
+
+  body.exporting-image .main-grid { grid-template-columns: 1fr; gap: 10px; }
+  body.exporting-image .card { padding: 12px; }
+  body.exporting-image .card-title { font-size: 11px; }
+
+  body.exporting-image .ingredienti-grid { grid-template-columns: 1fr; gap: 6px; }
+  body.exporting-image .ing-emoji { font-size: 16px; }
+  body.exporting-image .ing-nome { font-size: 13px; }
+  body.exporting-image .ing-qty { font-size: 16px; min-width: 34px; }
+  body.exporting-image .ing-note { font-size: 10.5px; }
+  body.exporting-image .ing-stagione-block { gap: 4px; }
+  body.exporting-image .ing-stag-label { font-size: 8.5px; }
+  body.exporting-image .ing-stag-val { font-size: 11px; }
+  body.exporting-image .ing-stag-unit { font-size: 7px; }
+  body.exporting-image .sel-small { font-size: 11px; padding: 8px 10px; }
+
+  body.exporting-image .param-item { flex: 1 1 45%; padding: 8px 6px; }
+  body.exporting-image .param-label { font-size: 8.5px; }
+  body.exporting-image .param-value { font-size: 15px; }
+  body.exporting-image .param-sub { font-size: 8px; }
+  body.exporting-image .param-emoji { font-size: 15px; }
+
+  body.exporting-image .fase-titolo { font-size: 12.5px; }
+  body.exporting-image .fase-tempo { font-size: 9.5px; padding: 3px 7px; }
+  body.exporting-image .fase-desc { font-size: 10.5px; }
+  body.exporting-image .fase-nota-breve { font-size: 9px; }
+  body.exporting-image .fase-num { width: 24px; height: 24px; font-size: 9.5px; }
+
+  body.exporting-image .liev-item { padding: 8px 10px; }
+  body.exporting-image .liev-icon { font-size: 18px; }
+  body.exporting-image .liev-label { font-size: 12px; }
+  body.exporting-image .liev-desc { font-size: 10px; }
+  body.exporting-image .liev-time { font-size: 18px; }
+
+  body.exporting-image .cottura-select { font-size: 12px; padding: 9px 10px; }
+  body.exporting-image .cottura-vals { gap: 8px; }
+  body.exporting-image .cottura-val-box { padding: 8px 10px; }
+  body.exporting-image .cottura-val-label { font-size: 7.5px; }
+  body.exporting-image .cottura-val-num { font-size: 17px; }
+
+  body.exporting-image .note-area { font-size: 12.5px; min-height: 60px; }
+
   @media print {
     @page { size: A4; margin: 0; }
     body { background: white; padding: 0; }
@@ -445,6 +513,7 @@
     .ing-stag-item { opacity: 1; }
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -455,6 +524,7 @@
   <button class="primary" onclick="salvaRicetta()">💾 Salva ricetta</button>
   <button onclick="document.getElementById('file-import').click()">📂 Carica ricetta</button>
   <button onclick="window.print()">🖨️ Stampa</button>
+  <button id="btn-esporta-immagine" onclick="esportaImmagine()">🖼️ Esporta immagine</button>
   <input type="file" id="file-import" accept=".json" style="display:none" onchange="caricaRicetta(event)">
   <div class="tb-sep zoom-controls"></div>
   <div class="zoom-controls">
@@ -1151,6 +1221,70 @@ function caricaRicetta(ev) {
   };
   reader.readAsText(file);
   ev.target.value = '';
+}
+
+/* ═════════ ESPORTA IMMAGINE (PNG) ═════════ */
+async function esportaImmagine() {
+  if (typeof html2canvas === 'undefined') {
+    msg('Libreria immagine non disponibile (verifica la connessione)', true);
+    return;
+  }
+  const btn = document.getElementById('btn-esporta-immagine');
+  const pageEl = document.querySelector('.page');
+  const prevZoom = pageEl.style.zoom;
+  const prevBtnText = btn.textContent;
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Generazione…';
+  document.body.classList.add('exporting-image');
+  pageEl.style.zoom = '';
+
+  try {
+    await new Promise(requestAnimationFrame);
+    await new Promise(requestAnimationFrame);
+
+    const canvas = await html2canvas(pageEl, {
+      scale: 2,
+      backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--crema').trim() || '#FAF6F0',
+      useCORS: true
+    });
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    if (!blob) throw new Error('toBlob ha restituito null');
+
+    const titolo = (document.querySelector('[data-k="titolo"]').innerText || 'pizza').trim() || 'pizza';
+    const nome = (document.querySelector('[data-k="nome"]').innerText || 'ricetta').trim() || 'ricetta';
+    const data = document.getElementById('data-ricetta').value || new Date().toISOString().slice(0, 10);
+    const slug = s => s.replace(/[^a-z0-9]+/gi,'_').replace(/^_+|_+$/g,'').toLowerCase();
+    const filename = slug(titolo) + '_' + slug(nome) + '_' + data + '.png';
+    const file = new File([blob], filename, { type: 'image/png' });
+
+    let gestita = false;
+    if (navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: filename });
+        msg('✓ Immagine condivisa');
+        gestita = true;
+      } catch (shareErr) {
+        if (shareErr && shareErr.name === 'AbortError') gestita = true;
+      }
+    }
+    if (!gestita) {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      msg('✓ Immagine salvata come file');
+    }
+  } catch (err) {
+    console.error(err);
+    msg('Errore nella generazione dell\'immagine', true);
+  } finally {
+    document.body.classList.remove('exporting-image');
+    pageEl.style.zoom = prevZoom;
+    btn.disabled = false;
+    btn.textContent = prevBtnText;
+  }
 }
 
 /* ═════════ ZOOM ═════════ */

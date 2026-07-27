@@ -1256,26 +1256,13 @@ async function esportaImmagine() {
     const data = document.getElementById('data-ricetta').value || new Date().toISOString().slice(0, 10);
     const slug = s => s.replace(/[^a-z0-9]+/gi,'_').replace(/^_+|_+$/g,'').toLowerCase();
     const filename = slug(titolo) + '_' + slug(nome) + '_' + data + '.png';
-    const file = new File([blob], filename, { type: 'image/png' });
 
-    let gestita = false;
-    if (navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], title: filename });
-        msg('✓ Immagine condivisa');
-        gestita = true;
-      } catch (shareErr) {
-        if (shareErr && shareErr.name === 'AbortError') gestita = true;
-      }
-    }
-    if (!gestita) {
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(a.href);
-      msg('✓ Immagine salvata come file');
-    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    msg('✓ Immagine salvata come file');
   } catch (err) {
     console.error(err);
     msg('Errore nella generazione dell\'immagine', true);

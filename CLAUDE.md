@@ -41,7 +41,7 @@ Because `.page` is a fixed-size A4 sheet, desktop uses a CSS `zoom` trick (`zoom
 
 ### Image export
 
-`esportaImmagine()` uses `html2canvas` (loaded from a CDN `<script>` tag in `<head>` — the only external script dependency) to rasterize `.page` into a PNG. It temporarily adds `body.exporting-image` (forcing the single-column layout, see above) and clears `.page`'s `style.zoom`, waits two `requestAnimationFrame`s for reflow, captures at `scale: 2`, then tries `navigator.share()` (native share sheet, mainly for mobile) before falling back to a plain `<a download>` blob download. Both `exporting-image` class and `style.zoom` are restored in a `finally` block.
+`esportaImmagine()` uses `html2canvas` (loaded from a CDN `<script>` tag in `<head>` — the only external script dependency) to rasterize `.page` into a PNG. It temporarily adds `body.exporting-image` (forcing the single-column layout, see above) and clears `.page`'s `style.zoom`, waits two `requestAnimationFrame`s for reflow, captures at `scale: 2`, then triggers a plain `<a download>` blob download (same pattern as `salvaRicetta()`, just a `.png` instead of `.json`). Both `exporting-image` class and `style.zoom` are restored in a `finally` block.
 
 ## Working in this repo
 

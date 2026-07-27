@@ -895,11 +895,10 @@ function renderSezioni() {
     addRow.className = 'add-ing-row';
     addRow.innerHTML = `
       <select class="sel-small" id="sel-add-ing-${si}">
-        <option value="farina">🌾 Farina</option>
         <option value="acqua">💧 Acqua</option>
         <option value="sale">🧂 Sale</option>
         <option value="lievito">🧬 Lievito</option>
-        <option value="olio">🫒 Olio</option>
+        <option value="olio" selected>🫒 Olio</option>
         <option value="malto">🍯 Malto / Zucchero</option>
         <option value="altro">✨ Altro ingrediente</option>
       </select>
@@ -1199,9 +1198,7 @@ function sezioniDefault() {
       nuovoIngrediente('farina'),
       nuovoIngrediente('acqua'),
       nuovoIngrediente('sale'),
-      nuovoIngrediente('lievito'),
-      nuovoIngrediente('olio'),
-      nuovoIngrediente('malto')
+      nuovoIngrediente('lievito')
     ]
   }];
 }

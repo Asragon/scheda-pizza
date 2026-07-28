@@ -575,11 +575,13 @@
     <div class="card full-width">
       <div class="card-title">
         <span class="dot dot-rosso"></span>
-        🧺 Ingredienti impasto — per
-        <span contenteditable="true" data-k="npizze" data-hint="4" style="font-weight:700;color:var(--rosso);min-width:12px;"></span>
-        pizze &nbsp;·&nbsp; panetto
-        <span contenteditable="true" data-k="pesopanetto" data-hint="250" style="font-weight:700;color:var(--rosso);min-width:22px;"></span>
-        <span class="unit-fix">g cad.</span>
+        🧺 Ingredienti impasto
+        <span class="cti-npizze">— per
+          <span contenteditable="true" data-k="npizze" data-hint="4" style="font-weight:700;color:var(--rosso);min-width:12px;"></span>
+          pizze</span>
+        <span class="cti-panetto">&nbsp;·&nbsp; panetto
+          <span contenteditable="true" data-k="pesopanetto" data-hint="250" style="font-weight:700;color:var(--rosso);min-width:22px;"></span>
+          <span class="unit-fix">g cad.</span></span>
       </div>
       <div id="sezioni-container"></div>
       <button class="btn-add wide" onclick="aggiungiSezione()">＋ Aggiungi sezione impasto (prefermento, chiusura...)</button>
@@ -638,7 +640,7 @@
               <span class="unit-fix">h</span>
             </div>
           </div>
-          <div style="background:#FEF9C3;border-radius:5px;padding:5px 8px;border:1px solid #FCD34D;">
+          <div class="liev-totale-box" style="background:#FEF9C3;border-radius:5px;padding:5px 8px;border:1px solid #FCD34D;">
             <div style="font-size:7.5px;font-weight:700;color:#92400E;">⏱️ Totale impasto → forno</div>
             <div style="display:flex;align-items:baseline;gap:3px;">
               <span style="font-size:8px;font-weight:700;color:#92400E;min-width:30px;" contenteditable="true" data-k="l_tot" data-hint="28–58"></span>
@@ -691,7 +693,7 @@
             </div>
           </div>
         </div>
-        <div style="margin-top:5px;background:#FEF9C3;border-radius:5px;padding:5px 8px;border-left:3px solid var(--ocra);">
+        <div class="cottura-note-box" style="margin-top:5px;background:#FEF9C3;border-radius:5px;padding:5px 8px;border-left:3px solid var(--ocra);">
           <div style="font-size:7.5px;font-weight:700;color:#92400E;">📝 Note</div>
           <div style="font-size:7px;color:var(--grigio);" contenteditable="true" data-k="cott_note" data-hint="es. ruotare la pizza a metà cottura"></div>
         </div>
@@ -1223,6 +1225,109 @@ function caricaRicetta(ev) {
   ev.target.value = '';
 }
 
+/* ═════════ PULIZIA CLONE PER ESPORTAZIONE (rimuove campi/righe/card vuoti) ═════════ */
+function pulisciCloneEsportazione(clonedRoot) {
+  const isEmpty = el => !el || el.textContent.trim() === '';
+  const hide = el => { if (el) el.style.display = 'none'; };
+
+  /* ---- HEADER: nome ricetta / note generali (label + valore, a coppie) ---- */
+  const nomeEl = clonedRoot.querySelector('[data-k="nome"]');
+  if (isEmpty(nomeEl)) { hide(nomeEl.previousElementSibling); hide(nomeEl); }
+  const notegenEl = clonedRoot.querySelector('[data-k="notegen"]');
+  if (isEmpty(notegenEl)) { hide(notegenEl.previousElementSibling); hide(notegenEl); }
+
+  /* ---- HEADER: box Data (stato letto dal DOM live, non dal clone) ---- */
+  if (!document.getElementById('data-ricetta').value) {
+    hide(clonedRoot.querySelector('.campo-edit'));
+  }
+
+  /* ---- STAGIONI (stato letto dalla variabile globale live) ---- */
+  if (stagioneSel === null) hide(clonedRoot.querySelector('#stagione-bar'));
+
+  /* ---- INGREDIENTI IMPASTO: clausola "per N pizze · panetto Xg cad." ---- */
+  const npizzeEl = clonedRoot.querySelector('[data-k="npizze"]');
+  const pesoEl   = clonedRoot.querySelector('[data-k="pesopanetto"]');
+  const npizzeEmpty = isEmpty(npizzeEl), pesoEmpty = isEmpty(pesoEl);
+  const clauseNpizze  = clonedRoot.querySelector('.cti-npizze');
+  const clausePanetto = clonedRoot.querySelector('.cti-panetto');
+  if (npizzeEmpty) hide(clauseNpizze);
+  if (pesoEmpty)   hide(clausePanetto);
+  if (npizzeEmpty && !pesoEmpty && clausePanetto) {
+    const firstNode = clausePanetto.firstChild;
+    if (firstNode && firstNode.nodeType === Node.TEXT_NODE) {
+      firstNode.textContent = firstNode.textContent.replace(/^\s*·\s*/, '— ');
+    }
+  }
+
+  /* ---- INGREDIENTI: rimuovi ogni ingrediente completamente vuoto ---- */
+  clonedRoot.querySelectorAll('.ingrediente-item').forEach(item => {
+    const campi = item.querySelectorAll('[contenteditable]');
+    if (Array.from(campi).every(f => f.textContent.trim() === '')) item.remove();
+  });
+  clonedRoot.querySelectorAll('.sezione-impasto').forEach(sez => {
+    const grid = sez.querySelector('.ingredienti-grid');
+    if (grid && grid.querySelectorAll('.ingrediente-item').length === 0) hide(sez);
+  });
+  const sezioniContainer = clonedRoot.querySelector('#sezioni-container');
+  if (sezioniContainer) {
+    const visibili = Array.from(sezioniContainer.children).filter(s => s.style.display !== 'none');
+    if (visibili.length === 0) hide(sezioniContainer.closest('.card'));
+  }
+
+  /* ---- PARAMETRI: rimuovi ogni parametro senza valore ---- */
+  clonedRoot.querySelectorAll('.param-item').forEach(item => {
+    if (isEmpty(item.querySelector('.param-value'))) item.remove();
+  });
+  const paramRow = clonedRoot.querySelector('#parametri-row');
+  if (paramRow && paramRow.querySelectorAll('.param-item').length === 0) {
+    hide(paramRow.closest('.card'));
+  }
+
+  /* ---- FASI (stato letto dall'array globale live) ---- */
+  if (fasi.length === 0) {
+    hide(clonedRoot.querySelector('#fasi-list').closest('.card'));
+  } else {
+    clonedRoot.querySelectorAll('.fase-item').forEach(item => {
+      const notaWrap = item.querySelector('.fase-nota-breve')?.parentElement;
+      if (isEmpty(item.querySelector('.fase-nota-breve'))) hide(notaWrap);
+      if (isEmpty(item.querySelector('.fs-tempo'))) hide(item.querySelector('.fase-tempo'));
+    });
+  }
+
+  /* ---- SCHEMA LIEVITAZIONE ---- */
+  let lievHaContenuto = false;
+  [['l_punt_d','l_punt_t'], ['l_mat_d','l_mat_t'], ['l_app_d','l_app_t']].forEach(([dk, tk]) => {
+    const descEl = clonedRoot.querySelector(`[data-k="${dk}"]`);
+    const timeEl = clonedRoot.querySelector(`[data-k="${tk}"]`);
+    const descEmpty = isEmpty(descEl), timeEmpty = isEmpty(timeEl);
+    if (descEmpty && timeEmpty) {
+      hide(descEl.closest('.liev-item'));
+    } else {
+      lievHaContenuto = true;
+      if (descEmpty) hide(descEl);
+      if (timeEmpty) hide(timeEl.closest('.liev-time-row'));
+    }
+  });
+  const totEl = clonedRoot.querySelector('[data-k="l_tot"]');
+  if (isEmpty(totEl)) hide(clonedRoot.querySelector('.liev-totale-box'));
+  else lievHaContenuto = true;
+  if (!lievHaContenuto) hide(clonedRoot.querySelector('[data-k="l_punt_d"]').closest('.card'));
+
+  /* ---- COTTURA: nascondi solo le righe vuote — la card resta sempre
+         (forno/pietra sono <select> nativi, hanno sempre un valore reale) ---- */
+  ['cott_cielo', 'cott_platea', 'cott_tempo'].forEach(k => {
+    const el = clonedRoot.querySelector(`[data-k="${k}"]`);
+    if (isEmpty(el)) hide(el.closest('.cottura-val-box'));
+  });
+  if (isEmpty(clonedRoot.querySelector('[data-k="cott_note"]'))) {
+    hide(clonedRoot.querySelector('.cottura-note-box'));
+  }
+
+  /* ---- NOTE personali ---- */
+  const noteArea = clonedRoot.querySelector('[data-k="note"]');
+  if (isEmpty(noteArea)) hide(noteArea.closest('.card'));
+}
+
 /* ═════════ ESPORTA IMMAGINE (PNG) ═════════ */
 async function esportaImmagine() {
   if (typeof html2canvas === 'undefined') {
@@ -1231,22 +1336,21 @@ async function esportaImmagine() {
   }
   const btn = document.getElementById('btn-esporta-immagine');
   const pageEl = document.querySelector('.page');
-  const prevZoom = pageEl.style.zoom;
   const prevBtnText = btn.textContent;
 
   btn.disabled = true;
   btn.textContent = '⏳ Generazione…';
-  document.body.classList.add('exporting-image');
-  pageEl.style.zoom = '';
 
   try {
-    await new Promise(requestAnimationFrame);
-    await new Promise(requestAnimationFrame);
-
     const canvas = await html2canvas(pageEl, {
       scale: 2,
       backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--crema').trim() || '#FAF6F0',
-      useCORS: true
+      useCORS: true,
+      onclone: (clonedDoc, clonedElement) => {
+        clonedDoc.body.classList.add('exporting-image');
+        clonedElement.style.zoom = '';
+        pulisciCloneEsportazione(clonedElement);
+      }
     });
     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
     if (!blob) throw new Error('toBlob ha restituito null');
@@ -1267,8 +1371,6 @@ async function esportaImmagine() {
     console.error(err);
     msg('Errore nella generazione dell\'immagine', true);
   } finally {
-    document.body.classList.remove('exporting-image');
-    pageEl.style.zoom = prevZoom;
     btn.disabled = false;
     btn.textContent = prevBtnText;
   }

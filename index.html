@@ -1230,6 +1230,17 @@ function pulisciCloneEsportazione(clonedRoot) {
   const isEmpty = el => !el || el.textContent.trim() === '';
   const hide = el => { if (el) el.style.display = 'none'; };
 
+  /* ---- SELECT nativi: html2canvas non li renderizza bene (testo tagliato) —
+         sostituiscili con testo semplice che mostra l'opzione selezionata ---- */
+  clonedRoot.querySelectorAll('select').forEach(sel => {
+    const span = document.createElement('span');
+    span.className = sel.className;
+    span.setAttribute('style', sel.getAttribute('style') || '');
+    const opt = sel.options[sel.selectedIndex];
+    span.textContent = opt ? opt.textContent : '';
+    sel.replaceWith(span);
+  });
+
   /* ---- HEADER: nome ricetta / note generali (label + valore, a coppie) ---- */
   const nomeEl = clonedRoot.querySelector('[data-k="nome"]');
   if (isEmpty(nomeEl)) { hide(nomeEl.previousElementSibling); hide(nomeEl); }

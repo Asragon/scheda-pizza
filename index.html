@@ -571,6 +571,13 @@
 
   <div class="main-grid">
 
+    <!-- ═══ PARAMETRI ═══ -->
+    <div class="card full-width">
+      <div class="card-title"><span class="dot dot-ocra"></span> ⚙️ Parametri tecnici impasto</div>
+      <div class="parametri-row" id="parametri-row"></div>
+      <button class="btn-add wide" onclick="aggiungiParametro()">＋ Aggiungi parametro</button>
+    </div>
+
     <!-- ═══ INGREDIENTI IMPASTO (sezioni multiple) ═══ -->
     <div class="card full-width">
       <div class="card-title">
@@ -585,13 +592,6 @@
       </div>
       <div id="sezioni-container"></div>
       <button class="btn-add wide" onclick="aggiungiSezione()">＋ Aggiungi sezione impasto (prefermento, chiusura...)</button>
-    </div>
-
-    <!-- ═══ PARAMETRI ═══ -->
-    <div class="card full-width">
-      <div class="card-title"><span class="dot dot-ocra"></span> ⚙️ Parametri tecnici impasto</div>
-      <div class="parametri-row" id="parametri-row"></div>
-      <button class="btn-add wide" onclick="aggiungiParametro()">＋ Aggiungi parametro</button>
     </div>
 
     <!-- ═══ FASI ═══ -->
@@ -621,7 +621,7 @@
           <div class="liev-item">
             <span class="liev-icon">🧊</span>
             <div class="liev-body">
-              <div class="liev-label">Maturazione in frigo</div>
+              <div class="liev-label">Maturazione</div>
               <div class="liev-desc" contenteditable="true" data-k="l_mat_d" data-hint="es. a 4°C — migliora digeribilità e aroma"></div>
             </div>
             <div class="liev-time-row">
@@ -638,13 +638,6 @@
             <div class="liev-time-row">
               <span class="liev-time" style="color:var(--ocra);" contenteditable="true" data-k="l_app_t" data-hint="4–8"></span>
               <span class="unit-fix">h</span>
-            </div>
-          </div>
-          <div class="liev-totale-box" style="background:#FEF9C3;border-radius:5px;padding:5px 8px;border:1px solid #FCD34D;">
-            <div style="font-size:7.5px;font-weight:700;color:#92400E;">⏱️ Totale impasto → forno</div>
-            <div style="display:flex;align-items:baseline;gap:3px;">
-              <span style="font-size:8px;font-weight:700;color:#92400E;min-width:30px;" contenteditable="true" data-k="l_tot" data-hint="28–58"></span>
-              <span class="unit-fix" style="color:#92400E;">ore</span>
             </div>
           </div>
         </div>
@@ -1319,9 +1312,6 @@ function pulisciCloneEsportazione(clonedRoot) {
       if (timeEmpty) hide(timeEl.closest('.liev-time-row'));
     }
   });
-  const totEl = clonedRoot.querySelector('[data-k="l_tot"]');
-  if (isEmpty(totEl)) hide(clonedRoot.querySelector('.liev-totale-box'));
-  else lievHaContenuto = true;
   if (!lievHaContenuto) hide(clonedRoot.querySelector('[data-k="l_punt_d"]').closest('.card'));
 
   /* ---- COTTURA: nascondi solo le righe vuote — la card resta sempre
